@@ -1,0 +1,60 @@
+.about-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 56px;
+}
+
+@media (min-width: 860px) {
+  .about-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+  }
+}
+
+.about-copy {
+  font-size: 1.05rem;
+  color: var(--text-secondary);
+  max-width: 52ch;
+  white-space: pre-line;
+}
+
+.timeline {
+  border-left: 1px solid var(--line);
+  padding-left: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.timeline-item {
+  position: relative;
+}
+
+.timeline-item::before {
+  content: "";
+  position: absolute;
+  left: -33px;
+  top: 6px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--cool);
+}
+
+.timeline-period {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  margin-bottom: 6px;
+}
+
+.timeline-school {
+  color: var(--text-secondary);
+  font-size: 0.92rem;
+  margin: 4px 0 8px;
+}
+
+.timeline-detail {
+  color: var(--text-secondary);
+  font-size: 0.92rem;
+  max-width: 42ch;
+}

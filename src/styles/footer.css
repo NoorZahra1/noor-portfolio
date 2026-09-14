@@ -1,0 +1,12 @@
+.site-footer {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 32px var(--edge) 56px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+  color: var(--text-tertiary);
+  font-size: 0.75rem;
+  border-top: 1px solid var(--line);
+}

@@ -1,0 +1,30 @@
+.contact-lede {
+  color: var(--text-secondary);
+  max-width: 52ch;
+  margin-bottom: 40px;
+  font-size: 1.02rem;
+}
+
+.contact-email {
+  display: inline-block;
+  font-family: var(--font-display);
+  font-size: clamp(1.4rem, 4vw, 2.4rem);
+  color: var(--text-primary);
+  text-decoration: none;
+  border-bottom: 1px solid var(--line-strong);
+  padding-bottom: 8px;
+  margin-bottom: 40px;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.contact-email:hover {
+  color: var(--cool);
+  border-color: var(--cool);
+}
+
+.contact-links {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
