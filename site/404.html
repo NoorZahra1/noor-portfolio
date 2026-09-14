@@ -49,25 +49,36 @@
   .grad{ background:linear-gradient(100deg,var(--a1),var(--a2) 55%,var(--a3));
     -webkit-background-clip:text; background-clip:text; color:transparent; }
 
+  /* dark-section scope (hero, featured, contact, footer) */
+  .theme-dark{ --bg:#0E1117; --bg-2:#141A23; --surface:#1A212C; --surface-2:#222B39;
+    --ink:#E9ECF2; --ink-soft:#AAB3C3; --ink-faint:#7E899B; --line:#28313F;
+    --a1:#5F93EC; --a2:#B47DE6; --a3:#F0975F; --accent:#79A6F2;
+    --shadow:0 10px 34px -18px rgba(0,0,0,.6);
+    background:var(--bg); color:var(--ink); }
+
   /* progress bar */
   #bar{ position:fixed; top:0; left:0; height:2px; width:0; z-index:60;
     background:linear-gradient(90deg,var(--a1),var(--a2),var(--a3)); }
 
   /* nav */
-  nav{ position:fixed; top:0; left:0; right:0; z-index:50; backdrop-filter:blur(10px);
-    background:color-mix(in srgb,var(--bg) 72%,transparent); border-bottom:1px solid transparent; transition:border-color .3s; }
-  nav.scrolled{ border-color:var(--line); }
+  nav{ position:fixed; top:0; left:0; right:0; z-index:50;
+    background:transparent; border-bottom:1px solid transparent; transition:background .3s, border-color .3s; }
+  nav.scrolled{ background:color-mix(in srgb,var(--bg) 85%,transparent); border-color:var(--line); backdrop-filter:blur(10px); }
   .nav-in{ max-width:var(--maxw); margin:0 auto; padding:15px 28px; display:flex; align-items:center; justify-content:space-between; }
-  .brand{ font-family:var(--f-display); font-weight:900; font-size:1.05rem; letter-spacing:-.02em; color:var(--ink); }
-  .brand span{ color:var(--accent); }
+  .brand{ font-family:var(--f-display); font-weight:900; font-size:1.05rem; letter-spacing:-.02em; color:#F2F4F8; transition:color .3s; }
+  .brand span{ color:#79A6F2; }
   .nav-links{ display:flex; gap:26px; }
-  .nav-links a{ font-size:.86rem; color:var(--ink-soft); font-weight:500; }
-  .nav-links a:hover{ color:var(--ink); }
+  .nav-links a{ font-size:.86rem; color:rgba(240,243,248,.74); font-weight:500; transition:color .3s; }
+  .nav-links a:hover{ color:#fff; }
+  nav.scrolled .brand{ color:var(--ink); }
+  nav.scrolled .brand span{ color:var(--accent); }
+  nav.scrolled .nav-links a{ color:var(--ink-soft); }
+  nav.scrolled .nav-links a:hover{ color:var(--ink); }
   @media(max-width:720px){ .nav-links{ display:none; } }
 
   /* hero */
-  .hero{ position:relative; min-height:100svh; display:flex; align-items:center; overflow:hidden; padding-top:70px; }
-  #flow{ position:absolute; inset:0; width:100%; height:100%; z-index:0; opacity:.92; }
+  .hero{ position:relative; min-height:100svh; display:flex; align-items:center; overflow:hidden; padding-top:70px; background:var(--bg); }
+  #flow{ position:absolute; inset:0; width:100%; height:100%; z-index:0; opacity:.9; }
   #jet{ position:absolute; top:0; right:0; width:60%; height:100%; z-index:1;
     touch-action:none; cursor:grab; opacity:0; transition:opacity 1.4s ease; }
   #jet.ready{ opacity:1; }
@@ -146,7 +157,7 @@
   input[type=range].fx-range::-moz-range-thumb{ width:18px; height:18px; border-radius:50%; background:var(--ink);
     border:3px solid var(--a2); cursor:pointer; }
   .fx-stage{ position:relative; margin-top:18px; border-radius:12px; overflow:hidden;
-    background:radial-gradient(120% 120% at 50% 18%, #ffffff, var(--bg-2)); border:1px solid var(--line); }
+    background:radial-gradient(120% 120% at 50% 18%, var(--surface-2), var(--bg)); border:1px solid var(--line); }
   #cavity{ display:block; width:100%; height:400px; touch-action:none; cursor:grab; }
   #cavity:active{ cursor:grabbing; }
   @media(max-width:600px){ #cavity{ height:300px; } }
@@ -255,7 +266,7 @@
   </div>
 </nav>
 
-<header class="hero" id="top">
+<header class="hero theme-dark" id="top">
   <canvas id="flow" aria-hidden="true"></canvas>
   <canvas id="jet" aria-hidden="true"></canvas>
   <div class="jet-cap">Real F-35 thesis geometry &middot; <b>drag to orbit</b></div>
@@ -282,7 +293,7 @@
 
 <main>
   <!-- FEATURED: CFD -->
-  <section class="featured" id="cfd">
+  <section class="featured theme-dark" id="cfd">
     <div class="wrap">
       <span class="feat-badge"><span class="dot"></span> Current &amp; latest work</span>
       <p class="eyebrow">Featured research</p>
@@ -479,7 +490,7 @@
   </section>
 
   <!-- CONTACT -->
-  <section class="contact" id="contact">
+  <section class="contact theme-dark" id="contact">
     <div class="wrap">
       <p class="eyebrow" style="justify-content:center;">Get in touch</p>
       <h2>Let's build something<br><span class="grad">worth simulating.</span></h2>
@@ -493,7 +504,7 @@
   </section>
 </main>
 
-<footer>
+<footer class="theme-dark">
   <div class="foot-in">
     <p>&copy; 2026 Noor Zahra</p>
     <p>CFD &times; AI &middot; Full-Stack &middot; Creator</p>
@@ -576,8 +587,8 @@
     pspd[i]=0.55+Math.random()*0.9; }
   for(var i=0;i<NP;i++) seedP(i,true);
   if(NP){ pgeo.setAttribute('position',new THREE.BufferAttribute(ppos,3));
-    var pmat=new THREE.PointsMaterial({size:0.02,color:0x3E7BE0,transparent:true,opacity:0.72,
-      blending:THREE.NormalBlending,depthWrite:false});
+    var pmat=new THREE.PointsMaterial({size:0.017,color:0x9fc0f5,transparent:true,opacity:0.6,
+      blending:THREE.AdditiveBlending,depthWrite:false});
     scene.add(new THREE.Points(pgeo,pmat)); }
 
   var last=performance.now();
@@ -611,9 +622,9 @@
     o[i]=(a[0]+(b[0]-a[0])*f)/255; o[i+1]=(a[1]+(b[1]-a[1])*f)/255; o[i+2]=(a[2]+(b[2]-a[2])*f)/255; }
 
   scene.add(new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1,1,1)),
-    new THREE.LineBasicMaterial({color:0x8494ab,transparent:true,opacity:0.9})));
+    new THREE.LineBasicMaterial({color:0x46536a,transparent:true,opacity:0.9})));
   var lid=new THREE.Mesh(new THREE.PlaneGeometry(1,1),
-    new THREE.MeshBasicMaterial({color:0x9B54D0,transparent:true,opacity:0.16,side:THREE.DoubleSide}));
+    new THREE.MeshBasicMaterial({color:0xB47DE6,transparent:true,opacity:0.14,side:THREE.DoubleSide}));
   lid.rotation.x=-Math.PI/2; lid.position.y=0.5; scene.add(lid);
 
   var Re=1000;
@@ -634,7 +645,7 @@
   var pgeo=new THREE.BufferGeometry();
   pgeo.setAttribute('position',new THREE.BufferAttribute(pos,3));
   pgeo.setAttribute('color',new THREE.BufferAttribute(col,3));
-  scene.add(new THREE.Points(pgeo,new THREE.PointsMaterial({size:0.03,vertexColors:true,transparent:true,opacity:0.95,blending:THREE.NormalBlending,depthWrite:false})));
+  scene.add(new THREE.Points(pgeo,new THREE.PointsMaterial({size:0.026,vertexColors:true,transparent:true,opacity:0.9,blending:THREE.AdditiveBlending,depthWrite:false})));
 
   var dist=2.6, az=0.7, pol=1.22, tAz=0.7, tPol=1.22, autoR=true, drag=false, lx=0, ly=0, idle=null;
   function cam(){ camera.position.set(dist*Math.sin(pol)*Math.cos(az), dist*Math.cos(pol), dist*Math.sin(pol)*Math.sin(az)); camera.lookAt(0,0,0); }
@@ -689,35 +700,36 @@
     return 'rgb('+Math.round(a[0]+(b[0]-a[0])*f)+','+Math.round(a[1]+(b[1]-a[1])*f)+','+Math.round(a[2]+(b[2]-a[2])*f)+')'; }
   function resize(){ var r=c.getBoundingClientRect(); W=r.width; H=r.height; c.width=W*DPR; c.height=H*DPR;
     x.setTransform(DPR,0,0,DPR,0,0); cx=W*0.62; cy=H*0.46; R=Math.max(26,Math.min(W,H)*0.09);
-    x.fillStyle='#F4F6FA'; x.fillRect(0,0,W,H); }
+    x.fillStyle='#0E1117'; x.fillRect(0,0,W,H); }
   function vel(px,py){ var dx=px-cx,dy=py-cy,r2=dx*dx+dy*dy,m=R*R*0.9; if(r2<m)r2=m;
     return [U*(1-R*R*(dx*dx-dy*dy)/(r2*r2)), U*(-R*R*2*dx*dy/(r2*r2))]; }
   var N=210, ps=[];
   function seed(p,i){ p.x=-20-Math.random()*W*0.5; p.y=(i%30+0.5)/30*H+(Math.random()-0.5)*10; p.px=p.x; p.py=p.y; p.age=0; p.max=180+Math.random()*160; }
   function init(){ ps=[]; for(var i=0;i<N;i++){ var p={}; seed(p,i); p.age=Math.random()*p.max; ps.push(p); } }
   function frame(){
-    x.fillStyle='rgba(244,246,250,0.075)'; x.fillRect(0,0,W,H);
-    x.beginPath(); x.arc(cx,cy,R,0,7); x.fillStyle='#EAEEF5'; x.fill(); x.lineWidth=1; x.strokeStyle='#CDD5E1'; x.stroke();
+    x.fillStyle='rgba(14,17,23,0.09)'; x.fillRect(0,0,W,H);
+    x.beginPath(); x.arc(cx,cy,R,0,7); x.fillStyle='#1A212C'; x.fill(); x.lineWidth=1; x.strokeStyle='#28313F'; x.stroke();
     x.lineCap='round';
     for(var i=0;i<ps.length;i++){ var p=ps[i]; p.px=p.x; p.py=p.y; var v=vel(p.x,p.y);
       p.x+=v[0]*1.8; p.y+=v[1]*1.8; p.age++;
       var dx=p.x-cx,dy=p.y-cy; if(dx*dx+dy*dy<R*R||p.x>W+20||p.y<-30||p.y>H+30||p.age>p.max){ seed(p,i); continue; }
       var sp=Math.min(1,Math.sqrt(v[0]*v[0]+v[1]*v[1])/(2*U));
       var fade=Math.min(1,p.age/16)*Math.min(1,(p.max-p.age)/16);
-      x.strokeStyle=ramp(sp); x.globalAlpha=0.82*fade; x.lineWidth=1.7;
+      x.strokeStyle=ramp(sp); x.globalAlpha=0.58*fade; x.lineWidth=1.5;
       x.beginPath(); x.moveTo(p.px,p.py); x.lineTo(p.x,p.y); x.stroke(); }
     x.globalAlpha=1; requestAnimationFrame(frame);
   }
   function stat(){ resize(); for(var l=0;l<18;l++){ var y0=(l+0.5)/18*H,px=-10,py=y0; x.beginPath(); x.moveTo(px,py);
     for(var s=0;s<280;s++){ var v=vel(px,py); px+=v[0]*1.8; py+=v[1]*1.8; if(px>W+10)break; x.lineTo(px,py); }
-    x.strokeStyle=ramp(Math.abs(y0-cy)<R*1.6?0.6:0.2); x.globalAlpha=0.6; x.lineWidth=1.3; x.stroke(); } x.globalAlpha=1; }
+    x.strokeStyle=ramp(Math.abs(y0-cy)<R*1.6?0.6:0.2); x.globalAlpha=0.5; x.lineWidth=1.2; x.stroke(); } x.globalAlpha=1; }
   var t; addEventListener('resize',function(){ clearTimeout(t); t=setTimeout(function(){ if(reduced)stat(); else{ resize(); init(); } },140); });
   resize(); if(reduced) stat(); else { init(); frame(); }
 })();
 // progress bar + nav
-(function(){ var b=document.getElementById('bar'), n=document.getElementById('nav');
+(function(){ var b=document.getElementById('bar'), n=document.getElementById('nav'), hero=document.getElementById('top');
   function u(){ var d=document.documentElement, top=d.scrollTop, h=d.scrollHeight-d.clientHeight;
-    b.style.width=(h>0?top/h*100:0)+'%'; n.classList.toggle('scrolled', top>40); }
+    b.style.width=(h>0?top/h*100:0)+'%';
+    var trig=hero? hero.offsetHeight-72 : 60; n.classList.toggle('scrolled', top>trig); }
   addEventListener('scroll',u,{passive:true}); addEventListener('resize',u); u();
 })();
 </script>
