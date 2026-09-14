@@ -66,11 +66,26 @@
 
   /* hero */
   .hero{ position:relative; min-height:100svh; display:flex; align-items:center; overflow:hidden; padding-top:70px; }
-  #flow{ position:absolute; inset:0; width:100%; height:100%; z-index:0; }
-  .hero::after{ content:""; position:absolute; inset:0; z-index:1; pointer-events:none;
-    background:radial-gradient(120% 90% at 15% 40%, transparent 30%, var(--bg) 82%),
-               linear-gradient(180deg, transparent 55%, var(--bg) 98%); }
-  .hero-in{ position:relative; z-index:2; width:100%; }
+  #flow{ position:absolute; inset:0; width:100%; height:100%; z-index:0; opacity:.7; }
+  #jet{ position:absolute; top:0; right:0; width:60%; height:100%; z-index:1;
+    touch-action:none; cursor:grab; opacity:0; transition:opacity 1.4s ease; }
+  #jet.ready{ opacity:1; }
+  #jet:active{ cursor:grabbing; }
+  .jet-cap{ position:absolute; right:26px; bottom:24px; z-index:4; font-family:var(--f-mono);
+    font-size:.7rem; letter-spacing:.08em; color:var(--ink-faint); opacity:0; transition:opacity 1.4s ease .4s; }
+  .jet-cap.ready{ opacity:1; }
+  .jet-cap b{ color:var(--accent); font-weight:500; }
+  .hero::after{ content:""; position:absolute; inset:0; z-index:2; pointer-events:none;
+    background:linear-gradient(90deg, var(--bg) 4%, color-mix(in srgb,var(--bg) 55%,transparent) 32%, transparent 56%),
+               linear-gradient(180deg, transparent 60%, var(--bg) 99%); }
+  .hero-in{ position:relative; z-index:3; width:100%; }
+  .hero-text{ max-width:620px; }
+  @media(max-width:860px){
+    #jet{ width:100%; }
+    #jet.ready{ opacity:.30; }
+    .jet-cap{ display:none; }
+    .hero::after{ background:linear-gradient(180deg, color-mix(in srgb,var(--bg) 42%,transparent), var(--bg) 88%); }
+  }
   .hero .tag{ font-family:var(--f-mono); font-size:.78rem; letter-spacing:.14em; text-transform:uppercase;
     color:var(--ink-soft); margin-bottom:22px; }
   .hero h1{ font-size:clamp(2.4rem,1.4rem+5vw,5.2rem); font-weight:900; line-height:1.0; letter-spacing:-.025em; }
@@ -208,8 +223,11 @@
 
 <header class="hero" id="top">
   <canvas id="flow" aria-hidden="true"></canvas>
+  <canvas id="jet" aria-hidden="true"></canvas>
+  <div class="jet-cap">Real F-35 thesis geometry &middot; <b>drag to orbit</b></div>
   <div class="hero-in">
     <div class="wrap">
+     <div class="hero-text">
       <p class="tag">Computational Aeronautics &middot; Full-Stack &middot; Creator &nbsp;/&nbsp; Lahore, Pakistan</p>
       <h1>I build where <span class="grad">simulation</span><br>meets <em>software</em>.</h1>
       <p class="hero-sub">I'm <b>Noor Zahra</b> — an MS Computational Science &amp; Engineering researcher building <b>AI surrogates for computational fluid dynamics</b>, on top of eight years shipping production software for clients around the world. Research, engineering, and a stubborn habit of making hard things usable.</p>
@@ -223,6 +241,7 @@
         <div class="m"><div class="n grad">5.0&#9733;</div><div class="l mono">CLIENT RATING</div></div>
         <div class="m"><div class="n grad">3</div><div class="l mono">DISCIPLINES</div></div>
       </div>
+     </div>
     </div>
   </div>
 </header>
@@ -265,7 +284,7 @@
     <div class="wrap">
       <p class="eyebrow">The long way here</p>
       <h2 class="sec-title">A decade of building, one step at a time.</h2>
-      <p class="sec-lead">No shortcut — teaching, then freelancing, then years of shipping for clients, and now research. Every stage funded and taught the next.</p>
+      <p class="sec-lead">No shortcut — a physics master's, then years of freelancing and shipping for clients, and now research. Every stage funded and taught the next.</p>
       <div class="timeline">
         <div class="tl-item now">
           <div class="when mono"><b>2026</b>now</div>
@@ -300,11 +319,11 @@
           </div>
         </div>
         <div class="tl-item">
-          <div class="when mono"><b>2015</b>&ndash; 2020</div>
+          <div class="when mono"><b>2015</b>&ndash; 2017</div>
           <div class="tl-body">
-            <h3>O-Level Computer Science Teacher</h3>
-            <div class="org mono">Lahore, Pakistan</div>
-            <p>The start: teaching computing to O-level students — where explaining hard things simply became second nature. It still shapes how I build interfaces and write documentation.</p>
+            <h3>MSc Computational Physics</h3>
+            <div class="org mono">CHEP, University of the Punjab &middot; Lahore</div>
+            <p>Where it began — a master's in computational physics at the Centre for High Energy Physics: numerical methods, simulation, and the physics-first thinking the CFD and reduced-order work now stands on.</p>
           </div>
         </div>
       </div>
@@ -402,7 +421,7 @@
       </div>
       <div class="feat-chips" style="margin-top:34px;">
         <span class="chip">MS CSE, Computational Science &amp; Engineering &middot; NUST &middot; 2025&ndash;</span>
-        <span class="chip">MSc Computer Science &middot; University of the Punjab &middot; 2013&ndash;2017</span>
+        <span class="chip">MSc Computational Physics &middot; CHEP, University of the Punjab &middot; 2015&ndash;2017</span>
       </div>
     </div>
   </section>
@@ -429,7 +448,103 @@
   </div>
 </footer>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
+// ---- interactive 3D F-35 (real thesis geometry, plasma flow shading) ----
+(function(){
+  if(typeof THREE==='undefined') return;
+  var canvas=document.getElementById('jet'); if(!canvas) return;
+  var reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var renderer;
+  try{ renderer=new THREE.WebGLRenderer({canvas:canvas,antialias:true,alpha:true}); }catch(e){ return; }
+  renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));
+  var scene=new THREE.Scene();
+  var camera=new THREE.PerspectiveCamera(35,1,0.01,100); camera.up.set(0,0,1);
+
+  var jet=new THREE.Group(); scene.add(jet);
+  var uTime={value:0};
+
+  function size(){ var w=canvas.clientWidth||1,h=canvas.clientHeight||1;
+    renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix(); }
+
+  // orbit state
+  var dist=3.15, az=0.85, pol=1.12, tAz=0.85, tPol=1.12, autoR=true, dragging=false, lx=0, ly=0, idle=null;
+  function updateCam(){ camera.position.set(
+      dist*Math.sin(pol)*Math.cos(az), dist*Math.sin(pol)*Math.sin(az), dist*Math.cos(pol));
+    camera.lookAt(0,0,0); }
+  canvas.addEventListener('pointerdown',function(e){ dragging=true; autoR=false; lx=e.clientX; ly=e.clientY;
+    if(idle)clearTimeout(idle); try{canvas.setPointerCapture(e.pointerId);}catch(_){} });
+  canvas.addEventListener('pointermove',function(e){ if(!dragging)return;
+    tAz-=(e.clientX-lx)*0.008; tPol=Math.max(0.4,Math.min(2.72,tPol-(e.clientY-ly)*0.008)); lx=e.clientX; ly=e.clientY; });
+  function endDrag(){ if(!dragging)return; dragging=false; idle=setTimeout(function(){autoR=true;},2800); }
+  canvas.addEventListener('pointerup',endDrag); canvas.addEventListener('pointercancel',endDrag);
+  canvas.addEventListener('pointerleave',endDrag);
+
+  var VERT=[
+    'varying vec3 vN; varying vec3 vNo; varying vec3 vView; varying vec3 vPos;',
+    'void main(){ vNo=normal; vN=normalize(normalMatrix*normal);',
+    ' vec4 mv=modelViewMatrix*vec4(position,1.0); vView=normalize(-mv.xyz); vPos=position;',
+    ' gl_Position=projectionMatrix*mv; }'].join('\n');
+  var FRAG=[
+    'uniform float uTime; uniform vec3 uA,uB,uC,uBase;',
+    'varying vec3 vN; varying vec3 vNo; varying vec3 vView; varying vec3 vPos;',
+    'vec3 ramp(float t){ t=clamp(t,0.0,1.0); return t<0.5? mix(uA,uB,t*2.0):mix(uB,uC,(t-0.5)*2.0); }',
+    'void main(){ vec3 N=normalize(vN); vec3 V=normalize(vView);',
+    ' float fres=pow(1.0-max(dot(N,V),0.0),2.4);',
+    ' float top=max(vNo.z,0.0); float front=max(-vNo.y,0.0);',            // top accel warm, nose stagnation cool
+    ' float mach=clamp(0.42+0.55*top-0.30*front,0.0,1.0);',
+    ' float bandY=-0.78+1.56*fract(uTime*0.075);',                        // travelling shock sweep nose->tail
+    ' float band=smoothstep(0.055,0.0,abs(vPos.y-bandY));',
+    ' mach=max(mach,band*0.92);',
+    ' vec3 flow=ramp(mach);',
+    ' vec3 L=normalize(vec3(0.4,-0.55,0.85)); float diff=0.34+0.66*max(dot(N,L),0.0);',
+    ' vec3 base=mix(uBase,uBase*1.6,top)*diff;',
+    ' vec3 col=base + flow*fres*1.7 + flow*band*0.85 + flow*fres*0.4;',
+    ' gl_FragColor=vec4(col,1.0); }'].join('\n');
+
+  var started=false;
+  fetch('f35.json').then(function(r){return r.json();}).then(function(d){
+    var g=new THREE.BufferGeometry();
+    g.setAttribute('position',new THREE.Float32BufferAttribute(d.verts,3));
+    g.setIndex(new THREE.BufferAttribute(new Uint32Array(d.faces),1));
+    g.computeVertexNormals();
+    var mat=new THREE.ShaderMaterial({ uniforms:{ uTime:uTime,
+        uA:{value:new THREE.Color(0x3A7BFF)}, uB:{value:new THREE.Color(0xB24BF3)},
+        uC:{value:new THREE.Color(0xFF7A3D)}, uBase:{value:new THREE.Color(0x0b0f18)} },
+      vertexShader:VERT, fragmentShader:FRAG });
+    jet.add(new THREE.Mesh(g,mat));
+    started=true; canvas.classList.add('ready');
+    var cap=document.querySelector('.jet-cap'); if(cap)cap.classList.add('ready');
+  }).catch(function(){});
+
+  // flow particles streaming +Y, deflecting around the fuselage
+  var NP=reduced?0:480, pgeo=new THREE.BufferGeometry(), ppos=new Float32Array(NP*3), pspd=new Float32Array(NP);
+  function seedP(i,anywhere){ var a=Math.random()*6.283, rr=0.32+Math.random()*0.95;
+    ppos[i*3]=Math.cos(a)*rr*0.62; ppos[i*3+2]=Math.sin(a)*rr*0.42;
+    ppos[i*3+1]= anywhere? (-1.5+Math.random()*3.0) : (-1.55-Math.random()*0.5);
+    pspd[i]=0.55+Math.random()*0.9; }
+  for(var i=0;i<NP;i++) seedP(i,true);
+  if(NP){ pgeo.setAttribute('position',new THREE.BufferAttribute(ppos,3));
+    var pmat=new THREE.PointsMaterial({size:0.013,color:0x86b4ff,transparent:true,opacity:0.55,
+      blending:THREE.AdditiveBlending,depthWrite:false});
+    scene.add(new THREE.Points(pgeo,pmat)); }
+
+  var last=performance.now();
+  function frame(now){ var dt=Math.min((now-last)/1000,0.05); last=now; uTime.value=now/1000;
+    if(autoR&&!reduced) tAz+=0.0015;
+    az+=(tAz-az)*0.08; pol+=(tPol-pol)*0.08; updateCam();
+    if(NP&&started){ for(var i=0;i<NP;i++){ var x=ppos[i*3],y=ppos[i*3+1],z=ppos[i*3+2];
+        y+=pspd[i]*dt; var rad=Math.sqrt(x*x*2.6+z*z*5.8);
+        if(Math.abs(y)<0.62&&rad<0.52){ var push=(0.52-rad)*0.05,a=Math.atan2(z,x);
+          x+=Math.cos(a)*push; z+=Math.sin(a)*push; ppos[i*3]=x; ppos[i*3+2]=z; }
+        if(y>1.65) seedP(i,false); else ppos[i*3+1]=y; }
+      pgeo.attributes.position.needsUpdate=true; }
+    renderer.render(scene,camera); requestAnimationFrame(frame); }
+  size(); updateCam(); addEventListener('resize',size);
+  if(!reduced) requestAnimationFrame(frame); else { started=true; canvas.classList.add('ready');
+    var cap=document.querySelector('.jet-cap'); if(cap)cap.classList.add('ready'); renderer.render(scene,camera); }
+})();
+
 // ---- flow-field hero (potential flow past a cylinder, plasma-ramped) ----
 (function(){
   var c=document.getElementById('flow'); if(!c) return;
