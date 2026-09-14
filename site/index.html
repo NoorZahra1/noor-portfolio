@@ -17,10 +17,10 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,900;1,9..144,500&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
 <style>
   :root{
-    --bg:#080A0F; --bg-2:#0E121B; --surface:#141A26; --surface-2:#1A2130;
-    --ink:#ECEEF3; --ink-soft:#A7B0C0; --ink-faint:#6B7688; --line:#232B3A;
-    --a1:#3A7BFF; --a2:#B24BF3; --a3:#FF7A3D;      /* plasma flow ramp */
-    --accent:#5B8CFF;
+    --bg:#0E1117; --bg-2:#141A23; --surface:#1A212C; --surface-2:#222B39;
+    --ink:#E9ECF2; --ink-soft:#AAB3C3; --ink-faint:#727D8F; --line:#28313F;
+    --a1:#5F93EC; --a2:#A974DC; --a3:#EC9663;      /* softened plasma flow ramp */
+    --accent:#6FA0F0;
     --f-display:'Fraunces', Georgia, 'Times New Roman', serif;
     --f-body:'Inter', system-ui, -apple-system, sans-serif;
     --f-mono:'JetBrains Mono', ui-monospace, 'Courier New', monospace;
@@ -127,6 +127,38 @@
   .feat-chips{ display:flex; flex-wrap:wrap; gap:8px; margin-top:20px; }
   .chip{ font-family:var(--f-mono); font-size:.74rem; color:var(--ink-soft); border:1px solid var(--line);
     background:var(--surface); padding:6px 11px; border-radius:6px; }
+
+  /* flow explorer (lid-driven cavity) */
+  .flow-explorer{ margin-top:36px; background:linear-gradient(180deg,var(--surface),var(--bg-2));
+    border:1px solid var(--line); border-radius:18px; padding:22px; overflow:hidden; }
+  .fx-head{ display:flex; flex-wrap:wrap; gap:18px 26px; align-items:flex-end; justify-content:space-between; }
+  .fx-head h3{ font-size:1.18rem; font-weight:600; }
+  .fx-head .fx-sub{ font-size:.9rem; color:var(--ink-soft); margin-top:5px; max-width:46ch; }
+  .fx-controls{ min-width:230px; }
+  .fx-controls .row{ display:flex; align-items:baseline; justify-content:space-between; margin-bottom:8px; }
+  .fx-controls .row .lab{ font-family:var(--f-mono); font-size:.72rem; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-faint); }
+  .fx-controls .row .val{ font-family:var(--f-display); font-weight:900; font-size:1.35rem; }
+  input[type=range].fx-range{ -webkit-appearance:none; appearance:none; width:100%; height:5px; border-radius:5px;
+    background:linear-gradient(90deg,var(--a1),var(--a2),var(--a3)); outline:none; }
+  input[type=range].fx-range::-webkit-slider-thumb{ -webkit-appearance:none; appearance:none; width:18px; height:18px;
+    border-radius:50%; background:var(--ink); border:3px solid var(--a2); cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,.5); }
+  input[type=range].fx-range::-moz-range-thumb{ width:18px; height:18px; border-radius:50%; background:var(--ink);
+    border:3px solid var(--a2); cursor:pointer; }
+  .fx-stage{ position:relative; margin-top:18px; border-radius:12px; overflow:hidden;
+    background:radial-gradient(120% 120% at 50% 20%, #131a25, var(--bg)); border:1px solid var(--line); }
+  #cavity{ display:block; width:100%; height:400px; touch-action:none; cursor:grab; }
+  #cavity:active{ cursor:grabbing; }
+  @media(max-width:600px){ #cavity{ height:300px; } }
+  .fx-note{ position:absolute; left:16px; top:14px; font-family:var(--f-mono); font-size:.68rem;
+    letter-spacing:.06em; color:var(--ink-faint); pointer-events:none; }
+  .fx-legend{ display:flex; align-items:center; gap:12px; margin-top:14px; font-family:var(--f-mono);
+    font-size:.68rem; color:var(--ink-faint); letter-spacing:.05em; }
+  .fx-legend .bar{ flex:1; height:6px; border-radius:6px; background:linear-gradient(90deg,var(--a1),var(--a2),var(--a3)); }
+
+  /* scroll reveal */
+  .reveal{ opacity:0; transform:translateY(20px); transition:opacity .7s cubic-bezier(.2,.7,.2,1), transform .7s cubic-bezier(.2,.7,.2,1); }
+  .reveal.in{ opacity:1; transform:none; }
+  @media(prefers-reduced-motion:reduce){ .reveal{ opacity:1 !important; transform:none !important; transition:none; } }
 
   /* journey timeline */
   .timeline{ position:relative; margin-top:44px; padding-left:8px; }
@@ -275,6 +307,24 @@
           <div class="pstep"><span class="i mono">05</span><span class="t"><b>Learn</b><span>A neural network maps parameters &rarr; coefficients</span></span></div>
           <div class="pstep"><span class="i mono">06</span><span class="t"><b>Predict</b><span>Any design point, in milliseconds &mdash; in VR</span></span></div>
         </div>
+      </div>
+
+      <div class="flow-explorer">
+        <div class="fx-head">
+          <div>
+            <h3>Lid-driven cavity &mdash; the flagship benchmark</h3>
+            <p class="fx-sub">The canonical case I validated the surrogate against (Ghia et&nbsp;al., 1982). Drag <b>Reynolds number</b> and watch the primary vortex tighten and drift toward the centre as corner vortices emerge &mdash; exactly the behaviour the surrogate learns to predict in milliseconds.</p>
+          </div>
+          <div class="fx-controls">
+            <div class="row"><span class="lab">Reynolds number</span><span class="val grad" id="reVal">1000</span></div>
+            <input type="range" class="fx-range" id="reSlider" min="0" max="100" value="50" aria-label="Reynolds number" />
+          </div>
+        </div>
+        <div class="fx-stage">
+          <div class="fx-note">lid &rarr; moving wall &middot; drag to orbit</div>
+          <canvas id="cavity" aria-hidden="true"></canvas>
+        </div>
+        <div class="fx-legend"><span>low speed</span><span class="bar"></span><span>high speed</span></div>
       </div>
     </div>
   </section>
@@ -509,8 +559,8 @@
     g.setIndex(new THREE.BufferAttribute(new Uint32Array(d.faces),1));
     g.computeVertexNormals();
     var mat=new THREE.ShaderMaterial({ uniforms:{ uTime:uTime,
-        uA:{value:new THREE.Color(0x3A7BFF)}, uB:{value:new THREE.Color(0xB24BF3)},
-        uC:{value:new THREE.Color(0xFF7A3D)}, uBase:{value:new THREE.Color(0x0b0f18)} },
+        uA:{value:new THREE.Color(0x5F93EC)}, uB:{value:new THREE.Color(0xA974DC)},
+        uC:{value:new THREE.Color(0xEC9663)}, uBase:{value:new THREE.Color(0x10141d)} },
       vertexShader:VERT, fragmentShader:FRAG });
     jet.add(new THREE.Mesh(g,mat));
     started=true; canvas.classList.add('ready');
@@ -525,7 +575,7 @@
     pspd[i]=0.55+Math.random()*0.9; }
   for(var i=0;i<NP;i++) seedP(i,true);
   if(NP){ pgeo.setAttribute('position',new THREE.BufferAttribute(ppos,3));
-    var pmat=new THREE.PointsMaterial({size:0.013,color:0x86b4ff,transparent:true,opacity:0.55,
+    var pmat=new THREE.PointsMaterial({size:0.013,color:0x8fb0e6,transparent:true,opacity:0.52,
       blending:THREE.AdditiveBlending,depthWrite:false});
     scene.add(new THREE.Points(pgeo,pmat)); }
 
@@ -545,25 +595,108 @@
     var cap=document.querySelector('.jet-cap'); if(cap)cap.classList.add('ready'); renderer.render(scene,camera); }
 })();
 
+// ---- SmartCFD: interactive lid-driven cavity (Reynolds-parametrised) ----
+(function(){
+  if(typeof THREE==='undefined') return;
+  var canvas=document.getElementById('cavity'); if(!canvas) return;
+  var reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var renderer; try{ renderer=new THREE.WebGLRenderer({canvas:canvas,antialias:true,alpha:true}); }catch(e){ return; }
+  renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));
+  var scene=new THREE.Scene();
+  var camera=new THREE.PerspectiveCamera(42,1,0.01,100); camera.up.set(0,1,0);
+
+  var stops=[[95,147,236],[169,116,220],[236,150,99]];
+  function ramp(t,o,i){ t=t<0?0:t>1?1:t; var s=t*2, k=s<1?0:1, f=s-k, a=stops[k], b=stops[k+1];
+    o[i]=(a[0]+(b[0]-a[0])*f)/255; o[i+1]=(a[1]+(b[1]-a[1])*f)/255; o[i+2]=(a[2]+(b[2]-a[2])*f)/255; }
+
+  scene.add(new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1,1,1)),
+    new THREE.LineBasicMaterial({color:0x2b3648,transparent:true,opacity:0.85})));
+  var lid=new THREE.Mesh(new THREE.PlaneGeometry(1,1),
+    new THREE.MeshBasicMaterial({color:0xA974DC,transparent:true,opacity:0.10,side:THREE.DoubleSide}));
+  lid.rotation.x=-Math.PI/2; lid.position.y=0.5; scene.add(lid);
+
+  var Re=1000;
+  function reParams(){ var t=Math.log(Re/100)/Math.log(100); return {cy:0.20*(1-t)+0.02, corner:t, om:0.9+0.6*t}; }
+  function vel(x,y,z,p,out){
+    var wx=Math.cos(Math.PI*x), wy=Math.cos(Math.PI*y), W=wx*wy; if(W<0)W=0;
+    var u= p.om*(y-p.cy)*W, v=-p.om*x*W;               // primary clockwise vortex, lid drives +x
+    var s=p.corner*0.7;
+    if(s>0.02){ var pc=[[-0.32,-0.36,1],[0.32,-0.36,-1]];
+      for(var c=0;c<2;c++){ var dx=x-pc[c][0], dy=y-pc[c][1], g=Math.exp(-(dx*dx+dy*dy)/0.012)*s*pc[c][2];
+        u+=-g*dy*8.0; v+=g*dx*8.0; } }
+    out[0]=u; out[1]=v; out[2]=0.10*Math.sin(Math.PI*2*z)*W*Math.cos(Math.PI*z);
+  }
+
+  var N=reduced?600:1600, pos=new Float32Array(N*3), col=new Float32Array(N*3), life=new Float32Array(N), TMP=[0,0,0];
+  function seed(i,any){ pos[i*3]=(Math.random()-0.5)*0.94; pos[i*3+1]=(Math.random()-0.5)*0.94; pos[i*3+2]=(Math.random()-0.5)*0.94; life[i]=any?Math.random()*4:0; }
+  for(var i=0;i<N;i++) seed(i,true);
+  var pgeo=new THREE.BufferGeometry();
+  pgeo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  pgeo.setAttribute('color',new THREE.BufferAttribute(col,3));
+  scene.add(new THREE.Points(pgeo,new THREE.PointsMaterial({size:0.02,vertexColors:true,transparent:true,opacity:0.92,blending:THREE.AdditiveBlending,depthWrite:false})));
+
+  var dist=2.6, az=0.7, pol=1.22, tAz=0.7, tPol=1.22, autoR=true, drag=false, lx=0, ly=0, idle=null;
+  function cam(){ camera.position.set(dist*Math.sin(pol)*Math.cos(az), dist*Math.cos(pol), dist*Math.sin(pol)*Math.sin(az)); camera.lookAt(0,0,0); }
+  canvas.addEventListener('pointerdown',function(e){ drag=true;autoR=false;lx=e.clientX;ly=e.clientY; if(idle)clearTimeout(idle); try{canvas.setPointerCapture(e.pointerId);}catch(_){}});
+  canvas.addEventListener('pointermove',function(e){ if(!drag)return; tAz-=(e.clientX-lx)*0.008; tPol=Math.max(0.5,Math.min(2.55,tPol-(e.clientY-ly)*0.008)); lx=e.clientX; ly=e.clientY; });
+  function endD(){ if(!drag)return; drag=false; idle=setTimeout(function(){autoR=true;},3200); }
+  canvas.addEventListener('pointerup',endD); canvas.addEventListener('pointercancel',endD); canvas.addEventListener('pointerleave',endD);
+
+  var slider=document.getElementById('reSlider'), reVal=document.getElementById('reVal');
+  function niceRe(n){ return n>=1000? (Math.round(n/50)*50).toLocaleString('en-US') : String(Math.round(n/10)*10); }
+  function upd(){ var t=slider? slider.value/100 : 0.5; Re=100*Math.pow(100,t); if(reVal) reVal.textContent=niceRe(Re); }
+  if(slider) slider.addEventListener('input',upd); upd();
+
+  function size(){ var w=canvas.clientWidth||1,h=canvas.clientHeight||1; renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix(); }
+  var active=false;
+  if('IntersectionObserver' in window) new IntersectionObserver(function(es){ active=es[0].isIntersecting; },{threshold:0.04}).observe(canvas);
+  else active=true;
+
+  var last=performance.now();
+  function frame(now){ requestAnimationFrame(frame); var dt=Math.min((now-last)/1000,0.05); last=now; if(!active) return;
+    if(autoR&&!reduced) tAz+=0.0016; az+=(tAz-az)*0.08; pol+=(tPol-pol)*0.08; cam();
+    var p=reParams(), o=TMP, sc=1.5;
+    for(var i=0;i<N;i++){ var x=pos[i*3],y=pos[i*3+1],z=pos[i*3+2];
+      vel(x,y,z,p,o); var spd=Math.sqrt(o[0]*o[0]+o[1]*o[1]+o[2]*o[2]);
+      x+=o[0]*dt*sc; y+=o[1]*dt*sc; z+=o[2]*dt*sc; life[i]+=dt;
+      if(x<-0.48||x>0.48||y<-0.48||y>0.48||z<-0.48||z>0.48||life[i]>5) seed(i,false);
+      else { pos[i*3]=x; pos[i*3+1]=y; pos[i*3+2]=z; }
+      ramp(spd/0.6, col, i*3);
+    }
+    pgeo.attributes.position.needsUpdate=true; pgeo.attributes.color.needsUpdate=true; renderer.render(scene,camera);
+  }
+  size(); cam(); addEventListener('resize',size); requestAnimationFrame(frame);
+})();
+
+// ---- scroll reveal (gentle) ----
+(function(){
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window)) return;
+  var sel='main .sec-title, main .sec-lead, main .feat-lead, main .pipe, main .card, main .quote, main .cbox, main .tl-item, main .flow-explorer, main .skill-cols>div, main .feat-chips, .contact h2, .contact p';
+  var els=[].slice.call(document.querySelectorAll(sel));
+  els.forEach(function(el){ el.classList.add('reveal'); });
+  var io=new IntersectionObserver(function(entries){ entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } }); },{threshold:0.12, rootMargin:'0px 0px -7% 0px'});
+  els.forEach(function(el){ io.observe(el); });
+})();
+
 // ---- flow-field hero (potential flow past a cylinder, plasma-ramped) ----
 (function(){
   var c=document.getElementById('flow'); if(!c) return;
   var x=c.getContext('2d'), reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
   var DPR=Math.min(devicePixelRatio||1,2), W=0,H=0,cx=0,cy=0,R=0,U=1.1;
-  var stops=[[58,123,255],[178,75,243],[255,122,61]];
+  var stops=[[95,147,236],[169,116,220],[236,150,99]];
   function ramp(t){ t=Math.max(0,Math.min(1,t)); var s=t*2, i=Math.min(Math.floor(s),1), f=s-i, a=stops[i], b=stops[i+1];
     return 'rgb('+Math.round(a[0]+(b[0]-a[0])*f)+','+Math.round(a[1]+(b[1]-a[1])*f)+','+Math.round(a[2]+(b[2]-a[2])*f)+')'; }
   function resize(){ var r=c.getBoundingClientRect(); W=r.width; H=r.height; c.width=W*DPR; c.height=H*DPR;
     x.setTransform(DPR,0,0,DPR,0,0); cx=W*0.62; cy=H*0.46; R=Math.max(26,Math.min(W,H)*0.09);
-    x.fillStyle='#080A0F'; x.fillRect(0,0,W,H); }
+    x.fillStyle='#0E1117'; x.fillRect(0,0,W,H); }
   function vel(px,py){ var dx=px-cx,dy=py-cy,r2=dx*dx+dy*dy,m=R*R*0.9; if(r2<m)r2=m;
     return [U*(1-R*R*(dx*dx-dy*dy)/(r2*r2)), U*(-R*R*2*dx*dy/(r2*r2))]; }
   var N=150, ps=[];
   function seed(p,i){ p.x=-20-Math.random()*W*0.5; p.y=(i%30+0.5)/30*H+(Math.random()-0.5)*10; p.px=p.x; p.py=p.y; p.age=0; p.max=180+Math.random()*160; }
   function init(){ ps=[]; for(var i=0;i<N;i++){ var p={}; seed(p,i); p.age=Math.random()*p.max; ps.push(p); } }
   function frame(){
-    x.fillStyle='rgba(8,10,15,0.10)'; x.fillRect(0,0,W,H);
-    x.beginPath(); x.arc(cx,cy,R,0,7); x.fillStyle='#141A26'; x.fill(); x.lineWidth=1; x.strokeStyle='#232B3A'; x.stroke();
+    x.fillStyle='rgba(14,17,23,0.10)'; x.fillRect(0,0,W,H);
+    x.beginPath(); x.arc(cx,cy,R,0,7); x.fillStyle='#1A212C'; x.fill(); x.lineWidth=1; x.strokeStyle='#28313F'; x.stroke();
     x.lineCap='round';
     for(var i=0;i<ps.length;i++){ var p=ps[i]; p.px=p.x; p.py=p.y; var v=vel(p.x,p.y);
       p.x+=v[0]*1.8; p.y+=v[1]*1.8; p.age++;
