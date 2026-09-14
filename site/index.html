@@ -67,7 +67,7 @@
 
   /* hero */
   .hero{ position:relative; min-height:100svh; display:flex; align-items:center; overflow:hidden; padding-top:70px; }
-  #flow{ position:absolute; inset:0; width:100%; height:100%; z-index:0; opacity:.7; }
+  #flow{ position:absolute; inset:0; width:100%; height:100%; z-index:0; opacity:.92; }
   #jet{ position:absolute; top:0; right:0; width:60%; height:100%; z-index:1;
     touch-action:none; cursor:grab; opacity:0; transition:opacity 1.4s ease; }
   #jet.ready{ opacity:1; }
@@ -538,20 +538,19 @@
     ' vec4 mv=modelViewMatrix*vec4(position,1.0); vView=normalize(-mv.xyz); vPos=position;',
     ' gl_Position=projectionMatrix*mv; }'].join('\n');
   var FRAG=[
-    'uniform float uTime; uniform vec3 uA,uB,uC,uBase;',
+    'uniform float uTime; uniform vec3 uA,uB,uC,uSteel;',
     'varying vec3 vN; varying vec3 vNo; varying vec3 vView; varying vec3 vPos;',
     'vec3 ramp(float t){ t=clamp(t,0.0,1.0); return t<0.5? mix(uA,uB,t*2.0):mix(uB,uC,(t-0.5)*2.0); }',
     'void main(){ vec3 N=normalize(vN); vec3 V=normalize(vView);',
-    ' float fres=pow(1.0-max(dot(N,V),0.0),2.4);',
-    ' float top=max(vNo.z,0.0); float front=max(-vNo.y,0.0);',            // top accel warm, nose stagnation cool
-    ' float mach=clamp(0.42+0.55*top-0.30*front,0.0,1.0);',
-    ' float bandY=-0.78+1.56*fract(uTime*0.075);',                        // travelling shock sweep nose->tail
-    ' float band=smoothstep(0.055,0.0,abs(vPos.y-bandY));',
-    ' mach=max(mach,band*0.92);',
-    ' vec3 flow=ramp(mach);',
-    ' vec3 L=normalize(vec3(0.4,-0.55,0.85)); float diff=0.34+0.66*max(dot(N,L),0.0);',
-    ' vec3 base=mix(uBase,uBase*1.6,top)*diff;',
-    ' vec3 col=base + flow*fres*1.7 + flow*band*0.85 + flow*fres*0.4;',
+    ' float fres=pow(1.0-max(dot(N,V),0.0),3.6);',                        // thin edge only
+    ' vec3 L1=normalize(vec3(0.5,-0.35,0.9)); vec3 L2=normalize(vec3(-0.55,0.5,0.35));',
+    ' float diff=0.36+0.72*max(dot(N,L1),0.0)+0.22*max(dot(N,L2),0.0);',   // studio key + fill
+    ' vec3 H=normalize(L1+V); float spec=pow(max(dot(N,H),0.0),26.0)*0.55;',
+    ' vec3 steel=uSteel*diff + vec3(spec);',                               // clean lit metal
+    ' float top=max(vNo.z,0.0); float mach=clamp(0.4+0.5*top,0.0,1.0); vec3 flow=ramp(mach);',
+    ' float bandY=-0.78+1.56*fract(uTime*0.075);',                        // travelling shock sweep
+    ' float band=smoothstep(0.05,0.0,abs(vPos.y-bandY));',
+    ' vec3 col=steel; col=mix(col,flow,band*0.5); col+=flow*fres*0.85;',   // subtle band + plasma rim
     ' gl_FragColor=vec4(col,1.0); }'].join('\n');
 
   var started=false;
@@ -561,8 +560,8 @@
     g.setIndex(new THREE.BufferAttribute(new Uint32Array(d.faces),1));
     g.computeVertexNormals();
     var mat=new THREE.ShaderMaterial({ uniforms:{ uTime:uTime,
-        uA:{value:new THREE.Color(0x5F93EC)}, uB:{value:new THREE.Color(0xA974DC)},
-        uC:{value:new THREE.Color(0xEC9663)}, uBase:{value:new THREE.Color(0x10141d)} },
+        uA:{value:new THREE.Color(0x3E7BE0)}, uB:{value:new THREE.Color(0x9B54D0)},
+        uC:{value:new THREE.Color(0xE0783E)}, uSteel:{value:new THREE.Color(0x9aa6bb)} },
       vertexShader:VERT, fragmentShader:FRAG });
     jet.add(new THREE.Mesh(g,mat));
     started=true; canvas.classList.add('ready');
@@ -570,14 +569,14 @@
   }).catch(function(){});
 
   // flow particles streaming +Y, deflecting around the fuselage
-  var NP=reduced?0:480, pgeo=new THREE.BufferGeometry(), ppos=new Float32Array(NP*3), pspd=new Float32Array(NP);
+  var NP=reduced?0:660, pgeo=new THREE.BufferGeometry(), ppos=new Float32Array(NP*3), pspd=new Float32Array(NP);
   function seedP(i,anywhere){ var a=Math.random()*6.283, rr=0.32+Math.random()*0.95;
     ppos[i*3]=Math.cos(a)*rr*0.62; ppos[i*3+2]=Math.sin(a)*rr*0.42;
     ppos[i*3+1]= anywhere? (-1.5+Math.random()*3.0) : (-1.55-Math.random()*0.5);
     pspd[i]=0.55+Math.random()*0.9; }
   for(var i=0;i<NP;i++) seedP(i,true);
   if(NP){ pgeo.setAttribute('position',new THREE.BufferAttribute(ppos,3));
-    var pmat=new THREE.PointsMaterial({size:0.013,color:0x5f8fd8,transparent:true,opacity:0.5,
+    var pmat=new THREE.PointsMaterial({size:0.02,color:0x3E7BE0,transparent:true,opacity:0.72,
       blending:THREE.NormalBlending,depthWrite:false});
     scene.add(new THREE.Points(pgeo,pmat)); }
 
@@ -629,13 +628,13 @@
     out[0]=u; out[1]=v; out[2]=0.10*Math.sin(Math.PI*2*z)*W*Math.cos(Math.PI*z);
   }
 
-  var N=reduced?600:1600, pos=new Float32Array(N*3), col=new Float32Array(N*3), life=new Float32Array(N), TMP=[0,0,0];
+  var N=reduced?800:2100, pos=new Float32Array(N*3), col=new Float32Array(N*3), life=new Float32Array(N), TMP=[0,0,0];
   function seed(i,any){ pos[i*3]=(Math.random()-0.5)*0.94; pos[i*3+1]=(Math.random()-0.5)*0.94; pos[i*3+2]=(Math.random()-0.5)*0.94; life[i]=any?Math.random()*4:0; }
   for(var i=0;i<N;i++) seed(i,true);
   var pgeo=new THREE.BufferGeometry();
   pgeo.setAttribute('position',new THREE.BufferAttribute(pos,3));
   pgeo.setAttribute('color',new THREE.BufferAttribute(col,3));
-  scene.add(new THREE.Points(pgeo,new THREE.PointsMaterial({size:0.022,vertexColors:true,transparent:true,opacity:0.9,blending:THREE.NormalBlending,depthWrite:false})));
+  scene.add(new THREE.Points(pgeo,new THREE.PointsMaterial({size:0.03,vertexColors:true,transparent:true,opacity:0.95,blending:THREE.NormalBlending,depthWrite:false})));
 
   var dist=2.6, az=0.7, pol=1.22, tAz=0.7, tPol=1.22, autoR=true, drag=false, lx=0, ly=0, idle=null;
   function cam(){ camera.position.set(dist*Math.sin(pol)*Math.cos(az), dist*Math.cos(pol), dist*Math.sin(pol)*Math.sin(az)); camera.lookAt(0,0,0); }
@@ -693,11 +692,11 @@
     x.fillStyle='#F4F6FA'; x.fillRect(0,0,W,H); }
   function vel(px,py){ var dx=px-cx,dy=py-cy,r2=dx*dx+dy*dy,m=R*R*0.9; if(r2<m)r2=m;
     return [U*(1-R*R*(dx*dx-dy*dy)/(r2*r2)), U*(-R*R*2*dx*dy/(r2*r2))]; }
-  var N=150, ps=[];
+  var N=210, ps=[];
   function seed(p,i){ p.x=-20-Math.random()*W*0.5; p.y=(i%30+0.5)/30*H+(Math.random()-0.5)*10; p.px=p.x; p.py=p.y; p.age=0; p.max=180+Math.random()*160; }
   function init(){ ps=[]; for(var i=0;i<N;i++){ var p={}; seed(p,i); p.age=Math.random()*p.max; ps.push(p); } }
   function frame(){
-    x.fillStyle='rgba(244,246,250,0.13)'; x.fillRect(0,0,W,H);
+    x.fillStyle='rgba(244,246,250,0.075)'; x.fillRect(0,0,W,H);
     x.beginPath(); x.arc(cx,cy,R,0,7); x.fillStyle='#EAEEF5'; x.fill(); x.lineWidth=1; x.strokeStyle='#CDD5E1'; x.stroke();
     x.lineCap='round';
     for(var i=0;i<ps.length;i++){ var p=ps[i]; p.px=p.x; p.py=p.y; var v=vel(p.x,p.y);
@@ -705,7 +704,7 @@
       var dx=p.x-cx,dy=p.y-cy; if(dx*dx+dy*dy<R*R||p.x>W+20||p.y<-30||p.y>H+30||p.age>p.max){ seed(p,i); continue; }
       var sp=Math.min(1,Math.sqrt(v[0]*v[0]+v[1]*v[1])/(2*U));
       var fade=Math.min(1,p.age/16)*Math.min(1,(p.max-p.age)/16);
-      x.strokeStyle=ramp(sp); x.globalAlpha=0.62*fade; x.lineWidth=1.5;
+      x.strokeStyle=ramp(sp); x.globalAlpha=0.82*fade; x.lineWidth=1.7;
       x.beginPath(); x.moveTo(p.px,p.py); x.lineTo(p.x,p.y); x.stroke(); }
     x.globalAlpha=1; requestAnimationFrame(frame);
   }
